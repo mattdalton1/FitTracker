@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".Record_Route">
+
+    <RelativeLayout
+        android:id="@+id/relativeLayout1"
+        android:layout_width="match_parent"
+        android:layout_height="72dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        >
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/start_label"
+            android:id="@+id/startBtn"
+            android:onClick="onClick"
+            android:layout_alignParentTop="true"
+            android:layout_toLeftOf="@+id/stopBtn"
+            android:layout_toStartOf="@+id/stopBtn"
+            android:layout_marginRight="68dp"
+            android:layout_marginEnd="68dp" />
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/stop_label"
+            android:id="@+id/stopBtn"
+            android:onClick="onClick"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginRight="70dp"
+            android:layout_marginEnd="70dp" />
+        <Button
+            android:id="@+id/resumeBtn"
+            android:layout_width="120dp"
+            android:layout_height="40dp"
+            android:onClick="onClick"
+            android:text="@string/btnResume"
+            android:textColor="#FFFFFF"
+            android:textSize="17sp"
+            android:visibility="invisible"
+            android:layout_alignTop="@+id/pauseBtn"
+            android:layout_alignLeft="@+id/startBtn"
+            android:layout_alignStart="@+id/startBtn" />
+        <Button
+            android:id="@+id/pauseBtn"
+            android:layout_width="120dp"
+            android:layout_height="40dp"
+            android:onClick="onClick"
+            android:text="@string/btnPause"
+            android:textSize="20sp"
+            android:visibility="invisible"
+            android:layout_alignBottom="@+id/startBtn"
+            android:layout_alignLeft="@+id/startBtn"
+            android:layout_alignStart="@+id/startBtn"
+            android:layout_alignRight="@+id/startBtn"
+            android:layout_alignEnd="@+id/startBtn" />
+    </RelativeLayout>
+    <fragment
+        android:id="@+id/map"
+        android:layout_width="match_parent"
+        android:layout_height="257dp"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/horizontalScrollView1"
+        class="com.google.android.gms.maps.SupportMapFragment"/>
+
+    <HorizontalScrollView
+        android:id="@+id/horizontalScrollView1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        >
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="62dp"
+            android:orientation="horizontal" >
+
+            <TextView
+                android:id="@+id/textTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/timeTextA"
+                android:textColor="#6B6B47"
+                android:textStyle="bold"
+                android:layout_marginTop="15dp"
+                android:layout_marginRight="20dp"
+                android:layout_marginLeft="10dp"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+
+            <TextView
+                android:id="@+id/time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/timeTextB"
+                android:textColor="#3D1000"
+                android:layout_marginTop="15dp"
+                android:layout_marginRight="20dp"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+
+            <TextView
+                android:id="@+id/textDistance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/distanceTextA"
+                android:textColor="#6B6B47"
+                android:textStyle="bold"
+                android:layout_marginTop="15dp"
+                android:layout_marginRight="20dp"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+
+            <TextView
+                android:id="@+id/distance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/caloriesTextB"
+                android:textColor="#3D1000"
+                android:layout_marginTop="15dp"
+                android:layout_marginRight="20dp"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+
+            <TextView
+                android:id="@+id/textCalories"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/caloriesTextA"
+                android:textColor="#6B6B47"
+                android:textStyle="bold"
+                android:layout_marginTop="15dp"
+                android:layout_marginRight="20dp"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+
+            <TextView
+                android:id="@+id/calories"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/caloriesTextB"
+                android:textColor="#3D1000"
+                android:layout_marginTop="15dp"
+                android:layout_marginRight="20dp"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+
+            <TextView
+                android:id="@+id/textPace"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/paceTextA"
+                android:textColor="#4747D1"
+                android:textStyle="bold"
+                android:layout_marginTop="15dp"
+                android:layout_marginRight="20dp"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+
+            <TextView
+                android:id="@+id/pace"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/paceTextB"
+                android:textColor="#4747D1"
+                android:layout_marginTop="15dp"
+                android:layout_marginRight="20dp"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        </LinearLayout>
+
+
+    </HorizontalScrollView>
+
+</RelativeLayout>
