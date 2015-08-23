@@ -154,13 +154,13 @@ public class Menu_Activity extends AppCompatActivity {
                 fragment = new Settings();
                 break;
             case 3:
-                fragment = new ExerciseHistory();
+                fragment = new Exercise_History();
                 break;
             case 4:
-                fragment = new FitTrackerUserShare();
+                fragment = new FitTracker_User_Share();
                 break;
             case 5:
-                fragment = new FitTrackerCommunity();
+                fragment = new FitTracker_Community();
                 break;
 
             default:

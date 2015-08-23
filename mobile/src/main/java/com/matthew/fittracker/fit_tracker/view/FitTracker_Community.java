@@ -9,8 +9,8 @@ import com.matthew.fittracker.fit_tracker.R;
 /**
  * Created by dalton on 12/08/2015.
  */
-public class FitTrackerCommunity extends Fragment {
-    public FitTrackerCommunity() {}
+public class FitTracker_Community extends Fragment {
+    public FitTracker_Community() {}
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {

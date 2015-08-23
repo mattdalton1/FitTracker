@@ -5,7 +5,6 @@
     <string name="btnPause">Pause</string>
     <string name="btnResume">Resume</string>
     <string name="btnOptions">Options</string>
-    <string name="optionsText">Options</string>
     <string name="satelliteText">Satellite </string>
     <string name="terrainText">Terrain</string>
     <string name="timeTextA">Time</string>

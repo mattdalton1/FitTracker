@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.matthew.fittracker.fit_tracker" >
 
+    <uses-permission android:name="in.wptrafficanalyzer.locationdistancetimemapv2.permission.MAPS_RECEIVE" />
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -39,6 +41,14 @@
             >
             <intent-filter>
                 <action android:name="view.RECORD_ROUTE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".view.Exercise_Results"
+            android:label="Fit Tracker"
+            >
+            <intent-filter>
+                <action android:name="view.EXERCISE_RESULTS" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
