@@ -2,6 +2,7 @@ package com.matthew.fittracker.fit_tracker.view;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.location.Criteria;
 import android.location.Location;
@@ -38,6 +39,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -55,12 +57,23 @@ public class Record_Route extends FragmentActivity implements View.OnClickListen
     private LocationListener locList;
 
     private ArrayList<LatLng> storedLocations;
-    private double currentLon, currentLat, prevLon, prevLat;
+    private double currentLon, currentLat, previousLon, previousLat, totalDistance;
     private long startTime, elapsedTime;
     private boolean stopped, displayPopUp = false;
     private String hours, minutes, seconds;
+    private PolylineOptions polylineOptions;
+    private MarkerOptions markerOptions;
 
-    static final int REQUEST_IMAGE_CAPTURE = 1;
+    private int unitindex;
+    private final static double[] multipliers = {
+            1.0,1.0936133,0.001,0.000621371192
+    };
+    private final static String[] unitstrings = {
+            "m", "y", "km", "mi"
+    };
+
+    static final int REQUEST_IMAGE_CAPTURE_CODE = 100;
+    private Bitmap imageData;
     /*
         How often should update the timer to show how much time has elapsed.
         Value in milliseconds. If set to 100, then every tenth of a second will update the timer
@@ -84,9 +97,15 @@ public class Record_Route extends FragmentActivity implements View.OnClickListen
         init();
     }
     private void init(){
-        currentLon = 0.0; currentLat = 0.0; prevLon = 0.0; prevLat = 0.0;
+        currentLon = 0.0; currentLat = 0.0; previousLon = 0.0; previousLat = 0.0; totalDistance = 0.0;
+        unitindex = 2;
         storedLocations = new ArrayList<LatLng>();
         stopped = false;
+        imageData = null;
+        polylineOptions = new PolylineOptions();
+        polylineOptions.color(Color.BLUE);
+        polylineOptions.width(3);
+        markerOptions = new MarkerOptions();
     }
     private void refWidgets(){
         popUp = (MiniMenu) findViewById(R.id.popupWindow);
@@ -114,7 +133,7 @@ public class Record_Route extends FragmentActivity implements View.OnClickListen
     }
     protected void onDestroy(){
         storedLocations.clear();
-        //stopListening();
+        mMap = null;
         super.onDestroy();
     }
     private void setUpMapIfNeeded() {
@@ -137,6 +156,7 @@ public class Record_Route extends FragmentActivity implements View.OnClickListen
         mMap.setMyLocationEnabled(true); // An indication of current location of device + get updates
         mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
         mMap.animateCamera((CameraUpdateFactory.zoomTo(18)));
+
         // Create a criteria object to retrieve provider - how accurate do we need, power, depends on the settings you have on maps
         final Criteria criteria = new Criteria();
         criteria.setAccuracy(Criteria.ACCURACY_FINE);
@@ -144,41 +164,93 @@ public class Record_Route extends FragmentActivity implements View.OnClickListen
         criteria.setBearingRequired(false);
         criteria.setCostAllowed(true);
         criteria.setPowerRequirement(Criteria.POWER_LOW);
+
         // Get the name of best provider
         final String provider = locationManager.getBestProvider(criteria, true);
         // Define a listener that responds to location updates
         locList = new locListener();
-        locationManager.requestLocationUpdates(provider, 9000, 0, locList); // The LocationManager is a service that listens for GPS coordinates from the device. This code requests that the system call this LocationListener every 8 seconds (8000 milliseconds) provided that the user has moved at least 5 meters from their previous position.
+        locationManager.requestLocationUpdates(provider, 7000, 0, locList); // The LocationManager is a service that listens for GPS coordinates from the device. This code requests that the system call this LocationListener every 8 seconds (8000 milliseconds) provided that the user has moved at least 5 meters from their previous position.
     }
     public class locListener implements LocationListener {
-        public void onLocationChanged(Location location) {
-            currentLat = location.getLatitude();
-            currentLon = location.getLongitude();
-            LatLng currentLocation = new LatLng(currentLat,currentLon);
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 18));
-            storedLocations.add(currentLocation);
 
-            //Toast.makeText(getBaseContext(), "Current Location:\t" + currentLocation, Toast.LENGTH_LONG).show();
-            if(storedLocations.size() >= 2) {
-                // Get starting location / position
-                LatLng previousLocation = storedLocations.get(1);
-                // Getting the URL to the Google Directions API
-                String url = getDirectionsUrl(previousLocation, currentLocation);
-                DownloadTask downloadTask = new DownloadTask(); // Start downloading json data from Google Directions API
-                downloadTask.execute(url);
-            }
+        public void onLocationChanged(Location location) {
+
+            if(location.getAccuracy() < 50){
+                currentLat = location.getLatitude();
+                currentLon = location.getLongitude();
+                LatLng currentLocation = new LatLng(currentLat,currentLon);
+
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 20));
+                markerOptions.position(currentLocation);
+                storedLocations.add(currentLocation);
+
+                if(storedLocations.size() > 0){
+                    LatLng initialLocation = storedLocations.get(0);
+                    mMap.addMarker(new MarkerOptions().position(initialLocation).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+                    polylineOptions.add(initialLocation);
+                }
+                markerOptions.title("Creating Route");
+                markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.bluedot));
+                mMap.addMarker(markerOptions);
+
+                polylineOptions.add(currentLocation);
+                mMap.addPolyline(polylineOptions);
+
+                //Toast.makeText(getBaseContext(), "Current Location:\t" + currentLocation, Toast.LENGTH_LONG).show();
+                if(storedLocations.size() > 1) {
+                    // Get Initial position
+                    //LatLng initialLocation = storedLocations.get(0);
+                    //markerOptions.position(initialLocation);
+                    //mMap.addMarker(markerOptions);
+
+                    // Get previous position
+                    LatLng previousLocation = storedLocations.get(storedLocations.size() - 2);
+                    //LatLng orginalPosition = storedLocations.get(0);
+
+                    previousLat = previousLocation.latitude;
+                    previousLon = previousLocation.longitude;
+
+                    double dis = calculateDistance(previousLat, previousLon, currentLat, currentLon);
+                    dis = roundDecimal(dis,3);
+                    totalDistance += dis;
+                    String distanceText = " " + totalDistance + " " + unitstrings[unitindex];
+                    distanceDisplay.setText(distanceText);
+                }
+            }else {}
         }
         public void onStatusChanged(String provider, int status, Bundle extras) {}
         public void onProviderEnabled(String provider) {}
         public void onProviderDisabled(String provider) {}
     }
+    /*
+        Calculating Distance:
+     */
+    private double calculateDistance(double prevLat, double prevLon,  double currLat, double currLon){
+        double distance = 0.0;
+        try{
+            float[] results = new float[3];
+            Location.distanceBetween(prevLat, prevLon, currLat, currLon, results);
+            distance = results[0] * multipliers[unitindex];
+        }
+        catch(final Exception ex){
+            distance = 0.0;
+        }
+        return distance;
+    }
+    public double roundDecimal(double value, int decimalPlace){
+        BigDecimal bd = new BigDecimal(value);
+        bd = bd.setScale(decimalPlace, 6);
+        return bd.doubleValue();
+    }
+    /*
+
+     */
     public void onClick(View view) {
         switch(view.getId()){
             case R.id.startBtn:
                 setUpMapIfNeeded();
                 startBtn.setVisibility(View.INVISIBLE);
                 pauseBtn.setVisibility(View.VISIBLE);
-
                 if(stopped)
                     startTime = System.currentTimeMillis() - elapsedTime;
                 else
@@ -214,6 +286,7 @@ public class Record_Route extends FragmentActivity implements View.OnClickListen
                 mHandler.removeCallbacks(startTimer);
                 stopped = true;
                 Intent resultIntent = new Intent(Record_Route.this, Exercise_Results.class);
+                resultIntent.putExtra("imageName", imageData);
                 startActivity(resultIntent);
                 break;
             case R.id.optionsBtn:
@@ -245,8 +318,22 @@ public class Record_Route extends FragmentActivity implements View.OnClickListen
             case R.id.takePhoto:
                 Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                 if (cameraIntent.resolveActivity(getPackageManager()) != null)
-                    startActivityForResult(cameraIntent, REQUEST_IMAGE_CAPTURE);
+                    startActivityForResult(cameraIntent, REQUEST_IMAGE_CAPTURE_CODE);
                 break;
+        }
+    }
+    /*
+        The Android Camera application encodes the photo in the return Intent delivered to onActivityResult() as a small Bitmap in the extras,
+        under the key "data".
+     */
+    protected void onActivityResult(int requestCode, int resultCode, Intent data){
+        if (requestCode == REQUEST_IMAGE_CAPTURE_CODE){
+            if(requestCode == RESULT_OK){
+                this.imageData = (Bitmap) data.getExtras().get("data");
+
+            }
+            else if(resultCode == RESULT_CANCELED) {}
+            else {}
         }
     }
     /* Start the timer
@@ -267,138 +354,5 @@ public class Record_Route extends FragmentActivity implements View.OnClickListen
         }
     };
 
-    private String getDirectionsUrl(LatLng origin,LatLng dest){
-        // Origin of route
-        String str_origin = "origin="+origin.latitude+","+origin.longitude;
-        // Destination of route
-        String str_dest = "destination="+dest.latitude+","+dest.longitude;
-        // Sensor enabled
-        String sensor = "sensor=false";
-        // Building the parameters to the web service
-        String parameters = str_origin+"&"+str_dest+"&"+sensor;
-        // Output format
-        String output = "json";
-        // Building the url to the web service
-        String url = "https://maps.googleapis.com/maps/api/directions/"+output+"?"+parameters;
 
-        return url;
-    }
-    /** A method to download json data from url */
-    private String downloadUrl(String strUrl) throws IOException {
-        String data = "";
-        InputStream iStream = null;
-        HttpURLConnection urlConnection = null;
-
-        try{
-            URL url = new URL(strUrl);
-            // Creating an http connection to communicate with url
-            urlConnection = (HttpURLConnection) url.openConnection();
-            // Connecting to url
-            urlConnection.connect();
-            // Reading data from url
-            iStream = urlConnection.getInputStream();
-            BufferedReader br = new BufferedReader(new InputStreamReader(iStream));
-            StringBuffer sb  = new StringBuffer();
-            String line = "";
-            while( ( line = br.readLine())  != null){
-                sb.append(line);
-            }
-            data = sb.toString();
-            br.close();
-        }catch(Exception e){
-            Log.d("Exception while downloading url", e.toString());
-        }finally{
-            iStream.close();
-            urlConnection.disconnect();
-        }
-        return data;
-    }
-    // Fetches data from url passed
-    private class DownloadTask extends AsyncTask<String, Void, String>{
-        // Downloading data in non-ui thread
-        protected String doInBackground(String... url) {
-            // For storing data from web service
-            String data = "";
-            try{
-                // Fetching the data from web service
-                data = downloadUrl(url[0]);
-            }catch(Exception e){
-                Log.d("Background Task",e.toString());
-            }
-            return data;
-        }
-        // Executes in UI thread, after the execution of
-        // doInBackground()
-        protected void onPostExecute(String result) {
-            super.onPostExecute(result);
-            ParserTask parserTask = new ParserTask();
-            // Invokes the thread for parsing the JSON data
-            parserTask.execute(result);
-        }
-    }
-    /** A class to parse the Google Places in JSON format */
-    private class ParserTask extends AsyncTask<String, Integer, List<List<HashMap<String,String>>> >{
-        // Parsing the data in non-ui thread
-        protected List<List<HashMap<String, String>>> doInBackground(String... jsonData) {
-            JSONObject jObject;
-            List<List<HashMap<String, String>>> routes = null;
-            try{
-                jObject = new JSONObject(jsonData[0]);
-                DirectionsJSONParser parser = new DirectionsJSONParser();
-
-                // Starts parsing data
-                routes = parser.parse(jObject);
-            }catch(Exception e){
-                e.printStackTrace();
-            }
-            return routes;
-        }
-        // Executes in UI thread, after the parsing process
-        protected void onPostExecute(List<List<HashMap<String, String>>> result) {
-            ArrayList<LatLng> points = null;
-            PolylineOptions lineOptions = null;
-            MarkerOptions markerOptions = new MarkerOptions();
-            String distance = "";
-            String duration = "";
-
-            if(result.size()<1){
-                Toast.makeText(getBaseContext(), "No Points", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            // Traversing through all the routes
-            for(int i=0;i<result.size();i++){
-                points = new ArrayList<LatLng>();
-                lineOptions = new PolylineOptions();
-                // Fetching i-th route
-                List<HashMap<String, String>> path = result.get(i);
-                // Fetching all the points in i-th route
-                for(int j=0;j<path.size();j++){
-                    HashMap<String,String> point = path.get(j);
-                    if(j==0){    // Get distance from the list
-                        distance = (String)point.get("distance");
-                        continue;
-                    }else if(j==1){ // Get duration from the list
-                        duration = (String)point.get("duration");
-                        continue;
-                    }
-                    double lat = Double.parseDouble(point.get("lat"));
-                    double lng = Double.parseDouble(point.get("lng"));
-                    LatLng position = new LatLng(lat, lng);
-                    points.add(position);
-                }
-                if (points.size() > 0) {
-                    // Place the origin marker
-                    LatLng orgLocation = points.get(0);
-                    mMap.addMarker(new MarkerOptions().position(orgLocation).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
-                }
-                // Adding all the points in the route to LineOptions
-                lineOptions.addAll(points);
-                lineOptions.width(2);
-                lineOptions.color(Color.RED);
-            }
-            distanceDisplay.setText(distance);
-            // Drawing polyline in the Google Map for the i-th route
-            mMap.addPolyline(lineOptions);
-        }
-    }
 }

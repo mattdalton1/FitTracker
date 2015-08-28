@@ -14,6 +14,7 @@ import com.matthew.fittracker.fit_tracker.R;
 public class Exercise_Results extends Activity{
 
     private ImageView iv;
+    private Bitmap bitmap;
 
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -29,19 +30,12 @@ public class Exercise_Results extends Activity{
         super.onStop();
     }
     protected void onDestroy(){ super.onDestroy(); }
-    /*
-        The Android Camera application encodes the photo in the return Intent delivered to onActivityResult() as a small Bitmap in the extras, under the key "data".
-     */
-    protected void onActivityReult(int requestCode, int resultCode, Intent data){
-        if (resultCode == RESULT_OK) {
-            Bundle extras = data.getExtras();
-            Bitmap imageBitmap = (Bitmap) extras.get("data");
-            iv.setImageBitmap(imageBitmap);
-        }
-    }
+
     private void refXML(){
         iv = (ImageView) findViewById(R.id.yourPhoto);
     }
     private void init(){
+        bitmap = getIntent().getExtras().getParcelable("imageName");
+        iv.setImageBitmap(bitmap);
     }
 }
