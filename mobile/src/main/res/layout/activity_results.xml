@@ -2,56 +2,76 @@
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#EEEEEE"
+    android:descendantFocusability="beforeDescendants"
+    android:focusableInTouchMode="true" >
     <GridView
         android:layout_width="122dp"
-        android:layout_height="360dp"
+        android:layout_height="330dp"
         android:id="@+id/gridView" />
     <ImageView
         android:layout_width="260dp"
-        android:layout_height="200dp"
-        android:id="@+id/imageView2"
+        android:layout_height="180dp"
+        android:id="@+id/showRoute"
         android:layout_alignParentTop="true"
         android:layout_alignBottom="@+id/gridView"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true" />
-    <LinearLayout
-        android:orientation="vertical"
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_below="@+id/gridView"
-        android:weightSum="1">
+        android:weightSum="1"
+        android:layout_below="@+id/gridView">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:text="Large Text"
-            android:id="@+id/textView" />
-
-        <EditText
-            android:layout_width="272dp"
-            android:layout_height="wrap_content"
-            android:inputType="textMultiLine"
-            android:ems="10"
-            android:id="@+id/editText" />
-
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@string/notes"
+            android:id="@+id/textView"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
         <ImageView
-            android:layout_width="100dp"
-            android:layout_height="80dp"
-            android:id="@+id/yourPhoto"
-            android:layout_gravity="right" />
-
-        <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="New Button"
-            android:id="@+id/button" />
-
-    </LinearLayout>
-
-
+            android:id="@+id/yourPhoto"
+            android:src="@drawable/ic_launcher"
+            android:layout_gravity="right"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_above="@+id/button"
+            android:layout_toEndOf="@+id/scrollView"
+            android:layout_alignTop="@+id/scrollView" />
+        <ScrollView
+            android:layout_width="276dp"
+            android:layout_height="76dp"
+            android:id="@+id/scrollView"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_below="@+id/textView"
+            android:layout_above="@+id/button">
+            <EditText
+                android:layout_width="272dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/leaveANote"
+                android:inputType="textMultiLine|textNoSuggestions"
+                android:ems="10"
+                android:text="Please enter your feelings!"
+                android:layout_below="@+id/textView"
+                android:layout_toLeftOf="@+id/yourPhoto"
+                android:layout_toStartOf="@+id/yourPhoto" />
+        </ScrollView>
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/saveActivity"
+            android:id="@+id/button"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
+    </RelativeLayout>
 </RelativeLayout>

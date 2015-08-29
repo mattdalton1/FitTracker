@@ -35,7 +35,7 @@ public class Exercise_Results extends Activity{
         iv = (ImageView) findViewById(R.id.yourPhoto);
     }
     private void init(){
-        bitmap = getIntent().getExtras().getParcelable("imageName");
+        bitmap = getIntent().getExtras().getParcelable("photo");
         iv.setImageBitmap(bitmap);
     }
 }

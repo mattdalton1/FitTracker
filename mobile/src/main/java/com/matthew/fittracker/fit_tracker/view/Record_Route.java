@@ -1,5 +1,4 @@
 package com.matthew.fittracker.fit_tracker.view;
-
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -8,18 +7,14 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.os.AsyncTask;
 import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.TextView;
-import android.widget.Toast;
-
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -28,34 +23,18 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.matthew.fittracker.fit_tracker.R;
-import com.matthew.fittracker.fit_tracker.logic.DirectionsJSONParser;
 import com.matthew.fittracker.fit_tracker.logic.MiniMenu;
 import com.matthew.fittracker.fit_tracker.logic.UpdateTime;
-
-
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.math.BigDecimal;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
 public class Record_Route extends FragmentActivity implements View.OnClickListener {
     private MiniMenu popUp;
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private Button startBtn, stopBtn, pauseBtn, resumeBtn, optionsBtn;
     private TextView timeDisplay, distanceDisplay, paceDisplay, caloriesBurnedDisplay, optionsText;
     private CheckBox satOption, terrOption, takeAPhoto;
-
     private LocationManager locationManager;
     private LocationListener locList;
-
     private ArrayList<LatLng> storedLocations;
     private double currentLon, currentLat, previousLon, previousLat, totalDistance;
     private long startTime, elapsedTime;
@@ -63,7 +42,6 @@ public class Record_Route extends FragmentActivity implements View.OnClickListen
     private String hours, minutes, seconds;
     private PolylineOptions polylineOptions;
     private MarkerOptions markerOptions;
-
     private int unitindex;
     private final static double[] multipliers = {
             1.0,1.0936133,0.001,0.000621371192
@@ -71,15 +49,14 @@ public class Record_Route extends FragmentActivity implements View.OnClickListen
     private final static String[] unitstrings = {
             "m", "y", "km", "mi"
     };
-
-    static final int REQUEST_IMAGE_CAPTURE_CODE = 100;
+    private static final int REQUEST_IMAGE_CAPTURE_CODE = 1888;
     private Bitmap imageData;
     /*
         How often should update the timer to show how much time has elapsed.
-        Value in milliseconds. If set to 100, then every tenth of a second will update the timer
+        Value in milliseconds. If set to 100, then every tenth of a second will update the timer.
      */
     private final int REFRESH_RATE = 100;
-    private Handler mHandler = new Handler();
+    private Handler mHandler;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -101,8 +78,8 @@ public class Record_Route extends FragmentActivity implements View.OnClickListen
         unitindex = 2;
         storedLocations = new ArrayList<LatLng>();
         stopped = false;
-        imageData = null;
         polylineOptions = new PolylineOptions();
+        mHandler = new Handler();
         polylineOptions.color(Color.BLUE);
         polylineOptions.width(3);
         markerOptions = new MarkerOptions();
@@ -149,32 +126,28 @@ public class Record_Route extends FragmentActivity implements View.OnClickListen
         }
     }
     private void setUpMap() {
-        // Get the Location Manager object from the "System Service LOCATION_SERVICE
-        if(locationManager == null){
-            locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE); // Requires acces course location permission in the manifest file
-        }
-        mMap.setMyLocationEnabled(true); // An indication of current location of device + get updates
+        // Get the Location Manager object from the "System Service LOCATION_SERVICE.
+        if(locationManager == null)
+            locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE); // Requires access course location permission in the manifest file.
+
+        mMap.setMyLocationEnabled(true); // An indication of current location of device + get updates.
         mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
         mMap.animateCamera((CameraUpdateFactory.zoomTo(18)));
-
-        // Create a criteria object to retrieve provider - how accurate do we need, power, depends on the settings you have on maps
+        // Create a criteria object to retrieve provider - how accurate do we need, power, depends on the settings you have on maps.
         final Criteria criteria = new Criteria();
         criteria.setAccuracy(Criteria.ACCURACY_FINE);
         criteria.setAltitudeRequired(false);
         criteria.setBearingRequired(false);
         criteria.setCostAllowed(true);
         criteria.setPowerRequirement(Criteria.POWER_LOW);
-
-        // Get the name of best provider
+        // Get the name of best provider.
         final String provider = locationManager.getBestProvider(criteria, true);
-        // Define a listener that responds to location updates
+        // Define a listener that responds to location updates.
         locList = new locListener();
-        locationManager.requestLocationUpdates(provider, 7000, 0, locList); // The LocationManager is a service that listens for GPS coordinates from the device. This code requests that the system call this LocationListener every 8 seconds (8000 milliseconds) provided that the user has moved at least 5 meters from their previous position.
+        locationManager.requestLocationUpdates(provider, 7000, 18, locList); // The LocationManager is a service that listens for GPS coordinates from the device. This code requests that the system call this LocationListener every 8 seconds (8000 milliseconds) provided that the user has moved at least 5 meters from their previous position.
     }
     public class locListener implements LocationListener {
-
         public void onLocationChanged(Location location) {
-
             if(location.getAccuracy() < 50){
                 currentLat = location.getLatitude();
                 currentLon = location.getLongitude();
@@ -196,20 +169,15 @@ public class Record_Route extends FragmentActivity implements View.OnClickListen
                 polylineOptions.add(currentLocation);
                 mMap.addPolyline(polylineOptions);
 
-                //Toast.makeText(getBaseContext(), "Current Location:\t" + currentLocation, Toast.LENGTH_LONG).show();
                 if(storedLocations.size() > 1) {
-                    // Get Initial position
-                    //LatLng initialLocation = storedLocations.get(0);
-                    //markerOptions.position(initialLocation);
-                    //mMap.addMarker(markerOptions);
-
-                    // Get previous position
+                    // Get previous position.
                     LatLng previousLocation = storedLocations.get(storedLocations.size() - 2);
-                    //LatLng orginalPosition = storedLocations.get(0);
-
                     previousLat = previousLocation.latitude;
                     previousLon = previousLocation.longitude;
-
+                    /*
+                        Calculating distance:
+                            Using method calculateDistance but read at shorter time periods using current and previous locations.
+                     */
                     double dis = calculateDistance(previousLat, previousLon, currentLat, currentLon);
                     dis = roundDecimal(dis,3);
                     totalDistance += dis;
@@ -231,8 +199,7 @@ public class Record_Route extends FragmentActivity implements View.OnClickListen
             float[] results = new float[3];
             Location.distanceBetween(prevLat, prevLon, currLat, currLon, results);
             distance = results[0] * multipliers[unitindex];
-        }
-        catch(final Exception ex){
+        }catch(final Exception ex){
             distance = 0.0;
         }
         return distance;
@@ -242,9 +209,6 @@ public class Record_Route extends FragmentActivity implements View.OnClickListen
         bd = bd.setScale(decimalPlace, 6);
         return bd.doubleValue();
     }
-    /*
-
-     */
     public void onClick(View view) {
         switch(view.getId()){
             case R.id.startBtn:
@@ -256,7 +220,7 @@ public class Record_Route extends FragmentActivity implements View.OnClickListen
                 else
                     startTime = System.currentTimeMillis();
                 /*  Check to ensure that there are no instances of the startTier runnable currently running
-                    and then starts a new thread to update the timer every one tenth of a second
+                    and then starts a new thread to update the timer every one tenth of a second.
                  */
                 mHandler.removeCallbacks(startTimer);
                 mHandler.postDelayed(startTimer, 0);
@@ -282,19 +246,19 @@ public class Record_Route extends FragmentActivity implements View.OnClickListen
                 onResume();
                 break;
             case R.id.stopBtn:
-                // The handler stops the application from looping in the runnable event
+                // The handler stops the application from looping in the runnable event.
                 mHandler.removeCallbacks(startTimer);
                 stopped = true;
                 Intent resultIntent = new Intent(Record_Route.this, Exercise_Results.class);
-                resultIntent.putExtra("imageName", imageData);
+                resultIntent.putExtra("photo", imageData);
                 startActivity(resultIntent);
                 break;
             case R.id.optionsBtn:
-                if(displayPopUp == false) {
+                if(displayPopUp == false){
                     displayPopUp = true;
                     popUp.setVisibility(View.VISIBLE);
                 }
-                else if(displayPopUp == true) {
+                else{
                     displayPopUp = false;
                     popUp.setVisibility(View.INVISIBLE);
                 }
@@ -315,31 +279,26 @@ public class Record_Route extends FragmentActivity implements View.OnClickListen
                         mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
                 }
                 break;
-            case R.id.takePhoto:
+            case R.id.takePhoto: // Take a Photo with the camera api.
                 Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                 if (cameraIntent.resolveActivity(getPackageManager()) != null)
-                    startActivityForResult(cameraIntent, REQUEST_IMAGE_CAPTURE_CODE);
+                    startActivityForResult(cameraIntent, REQUEST_IMAGE_CAPTURE_CODE); // This method protected by a condition that calls 'resolveActivity' which returns the first activity component that can handle the activity
                 break;
         }
     }
     /*
-        The Android Camera application encodes the photo in the return Intent delivered to onActivityResult() as a small Bitmap in the extras,
+        The Android Camera application encodes the photo in the return Intent delivered to onActivityResult() as a small Bitmap in the extras, 'a thumbnail'
         under the key "data".
      */
     protected void onActivityResult(int requestCode, int resultCode, Intent data){
-        if (requestCode == REQUEST_IMAGE_CAPTURE_CODE){
-            if(requestCode == RESULT_OK){
-                this.imageData = (Bitmap) data.getExtras().get("data");
-
-            }
-            else if(resultCode == RESULT_CANCELED) {}
-            else {}
+        if (requestCode == REQUEST_IMAGE_CAPTURE_CODE && resultCode == RESULT_OK) {
+            imageData = (Bitmap) data.getExtras().get("data");
         }
     }
     /* Start the timer
      * The timer runnable calculates the elapsed time by subtracting the current time from the start time,
      * then updates the TextView with the elapsed time so it can be seen,
-     * then waits for 1/10 second (Refresh rate) and checks the elapsed time again
+     * then waits for 1/10 second (Refresh rate) and checks the elapsed time again.
     */
     private Runnable startTimer = new Runnable(){
         public void run(){
@@ -353,6 +312,4 @@ public class Record_Route extends FragmentActivity implements View.OnClickListen
             mHandler.postDelayed(this, REFRESH_RATE);
         }
     };
-
-
 }
