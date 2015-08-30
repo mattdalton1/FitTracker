@@ -25,8 +25,13 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.matthew.fittracker.fit_tracker.R;
 import com.matthew.fittracker.fit_tracker.logic.MiniMenu;
 import com.matthew.fittracker.fit_tracker.logic.UpdateTime;
+
+import java.io.FileOutputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import com.google.android.gms.maps.GoogleMap.SnapshotReadyCallback;
+
+
 public class Record_Route extends FragmentActivity implements View.OnClickListener {
     private MiniMenu popUp;
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
@@ -50,13 +55,14 @@ public class Record_Route extends FragmentActivity implements View.OnClickListen
             "m", "y", "km", "mi"
     };
     private static final int REQUEST_IMAGE_CAPTURE_CODE = 1888;
-    private Bitmap imageData;
+    private Bitmap imageData, bitGmap;
     /*
         How often should update the timer to show how much time has elapsed.
         Value in milliseconds. If set to 100, then every tenth of a second will update the timer.
      */
     private final int REFRESH_RATE = 100;
     private Handler mHandler;
+    private SnapshotReadyCallback callback;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -109,8 +115,6 @@ public class Record_Route extends FragmentActivity implements View.OnClickListen
         super.onStop();
     }
     protected void onDestroy(){
-        storedLocations.clear();
-        mMap = null;
         super.onDestroy();
     }
     private void setUpMapIfNeeded() {
@@ -246,12 +250,15 @@ public class Record_Route extends FragmentActivity implements View.OnClickListen
                 onResume();
                 break;
             case R.id.stopBtn:
-                // The handler stops the application from looping in the runnable event.
-                mHandler.removeCallbacks(startTimer);
-                stopped = true;
-                Intent resultIntent = new Intent(Record_Route.this, Exercise_Results.class);
-                resultIntent.putExtra("photo", imageData);
-                startActivity(resultIntent);
+                if(mMap != null) {
+                    // The handler stops the application from looping in the runnable event.
+                    mHandler.removeCallbacks(startTimer);
+                    stopped = true;
+                    captureMapScreen();
+                    Intent resultIntent = new Intent(Record_Route.this, Exercise_Results.class);
+                    resultIntent.putExtra("photo", imageData);
+                    startActivity(resultIntent);
+                }
                 break;
             case R.id.optionsBtn:
                 if(displayPopUp == false){
@@ -312,4 +319,20 @@ public class Record_Route extends FragmentActivity implements View.OnClickListen
             mHandler.postDelayed(this, REFRESH_RATE);
         }
     };
+    public void captureMapScreen(){
+        callback = new SnapshotReadyCallback() {
+            public void onSnapshotReady(Bitmap snapshot) {
+                bitGmap = snapshot;
+                try {
+                    // SHOULD REALLY SAVE IT TO LOCAL STORAGE NOT SDCARD
+                    FileOutputStream out = new FileOutputStream("/mnt/sdcard/Pictures/" + "MyMapScreen" + ".png");
+                    bitGmap.compress(Bitmap.CompressFormat.PNG, 90, out);
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
+
+            }
+        };
+        mMap.snapshot(callback);
+    }
 }
